@@ -1,0 +1,245 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Peony — design tokens
+   Direction: "quiet editorial garden".
+   Paper, hairlines, generous asymmetric rhythm, one warm rose family.
+------------------------------------------------------------------ */
+
+@theme {
+  /* The five roses. Nothing else tints this product. */
+  --color-blush-50: #ffe5ec;
+  --color-blush-100: #ffc2d1;
+  --color-blush-200: #ffb3c6;
+  --color-blush-400: #ff8fab;
+  --color-blush-600: #fb6f92;
+
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Tailwind v4 only emits the theme variables its utilities actually reference,
+ * so anything consumed from hand-written CSS or arbitrary values is declared
+ * here as well. Same values, guaranteed to exist at runtime.
+ */
+:root {
+  --color-blush-50: #ffe5ec;
+  --color-blush-100: #ffc2d1;
+  --color-blush-200: #ffb3c6;
+  --color-blush-400: #ff8fab;
+  --color-blush-600: #fb6f92;
+
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* Deliberately uneven radii — nothing is uniformly rounded. */
+  --radius-xs: 5px;
+  --radius-sm: 9px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
+
+  --shadow-soft: 0 1px 2px rgba(59, 42, 49, 0.04),
+    0 14px 34px -18px rgba(251, 111, 146, 0.32);
+  --shadow-lift: 0 2px 4px rgba(59, 42, 49, 0.05),
+    0 26px 60px -26px rgba(251, 111, 146, 0.45);
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Neutrals derived from the rose family, never pure grey. */
+  --paper: #fdfafb;
+  --paper-deep: #f8f2f4;
+  --surface: #ffffff;
+  --surface-veil: rgba(255, 255, 255, 0.74);
+  /* Three ink weights, all kept at or above 4.5:1 on paper. */
+  --ink: #3b2a31;
+  --ink-soft: #6b565f;
+  --ink-faint: #7e6a72;
+
+  /*
+   * The five roses are a *surface* palette: #FB6F92 on paper is only 2.6:1, so
+   * rose-coloured text uses this deepened member of the same hue family, which
+   * clears 4.5:1 in both themes. Fills, rings, dots and buttons still use the
+   * palette exactly as given.
+   */
+  --rose-ink: #8a3f5a;
+  --hairline: rgba(59, 42, 49, 0.09);
+  --hairline-strong: rgba(59, 42, 49, 0.16);
+  --grain-opacity: 0.04;
+  --atmosphere-opacity: 1;
+
+  --space-gutter: clamp(1.25rem, 0.6rem + 2.4vw, 3.75rem);
+}
+
+:root[data-theme="dark"] {
+  --paper: #1a1216;
+  --paper-deep: #150e12;
+  --surface: #241a1f;
+  --surface-veil: rgba(36, 26, 31, 0.76);
+  --ink: #f7ebef;
+  --ink-soft: #c4a9b3;
+  --ink-faint: #9c848e;
+  --rose-ink: #ff8fab;
+  --hairline: rgba(255, 226, 235, 0.12);
+  --hairline-strong: rgba(255, 226, 235, 0.22);
+  --grain-opacity: 0.06;
+  --atmosphere-opacity: 0.6;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-hairline: var(--hairline);
+}
+
+* {
+  border-color: var(--hairline);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-blush-100);
+  color: #3b2a31;
+}
+
+/* Focus: a soft rose halo, never a browser-blue ring. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-blush-400);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@layer utilities {
+  /*
+   * Directional wash over the flower field: near-solid paper under the nav and
+   * the reading column, clearing to almost nothing on the right so the video is
+   * genuinely visible rather than fogged out.
+   */
+  .atmosphere-wash {
+    background: linear-gradient(
+      101deg,
+      rgba(253, 250, 251, 0.94) 0%,
+      rgba(253, 250, 251, 0.86) 26%,
+      rgba(253, 250, 251, 0.5) 56%,
+      rgba(253, 250, 251, 0.12) 82%,
+      rgba(253, 250, 251, 0) 100%
+    );
+  }
+
+  :root[data-theme="dark"] .atmosphere-wash {
+    background: linear-gradient(
+      101deg,
+      rgba(26, 18, 22, 0.95) 0%,
+      rgba(26, 18, 22, 0.9) 26%,
+      rgba(26, 18, 22, 0.62) 56%,
+      rgba(26, 18, 22, 0.3) 82%,
+      rgba(26, 18, 22, 0.14) 100%
+    );
+  }
+
+  /* Rose that is safe to read: see --rose-ink above. */
+  .text-rose-ink {
+    color: var(--rose-ink);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+    font-variation-settings: "SOFT" 40, "WONK" 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Numerals in stats read as typography, not as UI chrome. */
+  .numeral {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-variation-settings: "SOFT" 60;
+    letter-spacing: -0.03em;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .surface-sheet {
+    background: var(--surface-veil);
+    backdrop-filter: blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  }
+
+  .scrollbar-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: var(--hairline-strong) transparent;
+  }
+  .scrollbar-quiet::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  .scrollbar-quiet::-webkit-scrollbar-thumb {
+    background: var(--hairline-strong);
+    border-radius: 99px;
+  }
+  .scrollbar-quiet::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer base {
+  button,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@keyframes peony-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes peony-drift {
+  0% {
+    transform: scale(1.06) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.1) translate3d(-1.2%, -0.8%, 0);
+  }
+  100% {
+    transform: scale(1.06) translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root[data-motion="calm"] *,
+:root[data-motion="calm"] *::before,
+:root[data-motion="calm"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
