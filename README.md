@@ -43,9 +43,14 @@ Global: `/` or `⌘K` searches everything, `C` adds a task, single letters navig
   white ones.
 - **Type**: Fraunces (soft, wonky optical serif) for display and numerals, Plus
   Jakarta Sans for text.
-- **Background**: an 8-second loop generated with OpenArt (PixVerse V6), blurred
-  26px and pushed behind a paper wash. It mounts after first paint, never under
-  reduced-motion, and never on phones. `public/media/atmosphere.mp4`.
+- **Background**: a 720p loop of peonies in golden-hour light, generated with
+  OpenArt (PixVerse V6). It plays unblurred behind a directional paper wash —
+  near-solid under the reading column, clear on the right. Mounts after first
+  paint on every screen size; skipped under reduced-motion or Save-Data.
+  `public/media/atmosphere.mp4`.
+- **Opening**: the landing page is the front board of a book. Tapping it hinges
+  the cover open on the left edge to reveal the first page, and the planner loads
+  behind it.
 - **Motion**: Framer Motion, kept to opacity and transform. Calm-motion mode in
   settings removes all of it; `prefers-reduced-motion` is honoured everywhere.
 

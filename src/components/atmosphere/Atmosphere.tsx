@@ -6,10 +6,11 @@ import { cn } from "@/lib/cn";
 /**
  * The room the app sits in.
  *
- * A slow field of pink flowers, blurred past the point of legibility and pushed
- * behind a paper wash so text contrast never depends on which frame is playing.
- * The video only mounts after first paint, and never for reduced-motion users —
- * they still get the poster still, so the atmosphere survives without the weight.
+ * Peonies moving in the light, held behind a directional paper wash so text
+ * contrast never depends on which frame is playing. The video mounts after first
+ * paint on every size of screen, but never for reduced-motion users and never on
+ * a metered connection — they get the poster still, which carries the same mood
+ * without the weight.
  */
 export function Atmosphere({ enabled = true, intensity = 1 }: { enabled?: boolean; intensity?: number }) {
   const [showVideo, setShowVideo] = useState(false);
@@ -17,7 +18,12 @@ export function Atmosphere({ enabled = true, intensity = 1 }: { enabled?: boolea
   useEffect(() => {
     if (!enabled) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (window.matchMedia("(max-width: 640px)").matches) return; // save phone data
+
+    const connection = (
+      navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
+    ).connection;
+    if (connection?.saveData) return;
+    if (connection?.effectiveType && /2g/.test(connection.effectiveType)) return;
 
     const schedule =
       window.requestIdleCallback?.bind(window) ?? ((callback: () => void) => window.setTimeout(callback, 900));
