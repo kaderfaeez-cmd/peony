@@ -131,6 +131,26 @@ function buildActions(store: Store) {
       patch: Parameters<typeof A.upsertReflection>[3],
     ) => store.update((s) => A.upsertReflection(s, period, scope, patch)),
 
+    /* kitchen */
+    setMeal: (date: string, title: string) => store.update((s) => A.setMeal(s, date, title)),
+    addShoppingItem: (item: Parameters<typeof A.addShoppingItem>[1]) =>
+      store.update((s) => A.addShoppingItem(s, item)),
+    updateShoppingItem: (id: string, patch: Parameters<typeof A.updateShoppingItem>[2]) =>
+      store.update((s) => A.updateShoppingItem(s, id, patch)),
+    toggleShoppingItem: (id: string) => store.update((s) => A.toggleShoppingItem(s, id)),
+    deleteShoppingItem(id: string) {
+      const removed = find((s) => s.shopping.find((item) => item.id === id));
+      store.update((s) => A.removeShoppingItem(s, id));
+      return removed ?? null;
+    },
+    clearTickedShopping() {
+      const removed = find((s) => s.shopping.filter((item) => item.done));
+      store.update((s) => A.clearTickedShopping(s));
+      return removed;
+    },
+    restoreShoppingItems: (items: Parameters<typeof A.restoreShoppingItems>[1]) =>
+      store.update((s) => A.restoreShoppingItems(s, items)),
+
     /* settings + data */
     updateSettings: (patch: Parameters<typeof A.updateSettings>[1]) =>
       store.update((s) => A.updateSettings(s, patch)),

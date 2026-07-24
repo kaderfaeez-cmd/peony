@@ -38,6 +38,8 @@ export function emptyState(): PlannerState {
     notes: [],
     journal: [],
     reflections: [],
+    meals: [],
+    shopping: [],
     settings: DEFAULT_SETTINGS,
   };
 }
@@ -139,6 +141,41 @@ export function seededState(): PlannerState {
         ],
         celebratedAt: null,
         archived: false,
+        createdAt: now.toISOString(),
+      },
+    ],
+    meals: [
+      {
+        id: createId("meal"),
+        date: today,
+        title: "Lemon butter pasta",
+        note: "",
+        updatedAt: now.toISOString(),
+      },
+    ],
+    shopping: [
+      {
+        id: createId("shop"),
+        title: "Lemons",
+        quantity: "3",
+        aisle: "produce",
+        done: false,
+        createdAt: now.toISOString(),
+      },
+      {
+        id: createId("shop"),
+        title: "Butter",
+        quantity: "",
+        aisle: "dairy",
+        done: false,
+        createdAt: now.toISOString(),
+      },
+      {
+        id: createId("shop"),
+        title: "Peonies, if they have them",
+        quantity: "",
+        aisle: "other",
+        done: false,
         createdAt: now.toISOString(),
       },
     ],

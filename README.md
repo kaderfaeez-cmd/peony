@@ -17,12 +17,13 @@ Then open <http://localhost:3000>.
 
 | Area | Route | Notes |
 | --- | --- | --- |
-| Landing | `/` | Hero over the looping flower field |
+| Cover | `/` | Name, "a quiet planner", and whose planner it is — tap to open |
 | Dashboard | `/home` | Today, schedule, deadlines, progress rings, habits, quote, weather |
 | Daily planner | `/today` | Morning / afternoon / evening, drag to reorder or move between parts |
 | Weekly planner | `/week` | Seven bands, drag a task to another day, weekly reflection |
 | Monthly planner | `/month` | Full calendar, drag between days, deadline markers, monthly reflection |
 | Tasks | `/tasks` | Every task, filtered by state and category; archive and history |
+| Kitchen | `/kitchen` | Weekly menu with suggestions, plus a shopping list grouped by aisle |
 | Habits | `/habits` | Streaks, weekly targets, month heatmap |
 | Goals | `/goals` | Short and long term, milestones, celebration when the last one lands |
 | Notes | `/notes` | Markdown subset with live checkboxes, pinning and search |
@@ -48,9 +49,11 @@ Global: `/` or `⌘K` searches everything, `C` adds a task, single letters navig
   near-solid under the reading column, clear on the right. Mounts after first
   paint on every screen size; skipped under reduced-motion or Save-Data.
   `public/media/atmosphere.mp4`.
-- **Opening**: the landing page is the front board of a book. Tapping it hinges
-  the cover open on the left edge to reveal the first page, and the planner loads
-  behind it.
+- **Opening**: the landing page is the front board of a book, carrying only the
+  name, the line "a quiet planner", and whose planner it is. First run asks for a
+  name and keeps it in settings — there is no account, because there is no server
+  to hold one; the cover personalises locally. Tapping the board hinges it open on
+  the left edge to reveal the first page, and the planner loads behind it.
 - **Motion**: Framer Motion, kept to opacity and transform. Calm-motion mode in
   settings removes all of it; `prefers-reduced-motion` is honoured everywhere.
 

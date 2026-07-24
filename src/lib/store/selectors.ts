@@ -80,7 +80,7 @@ export const goalProgress = (goal: Goal) => {
 
 export interface SearchHit {
   id: string;
-  kind: "task" | "note" | "goal" | "habit" | "journal";
+  kind: "task" | "note" | "goal" | "habit" | "journal" | "meal" | "shopping";
   title: string;
   detail: string;
   href: string;
@@ -116,6 +116,16 @@ export function search(state: PlannerState, rawQuery: string): SearchHit[] {
   for (const habit of state.habits) {
     if (habit.name.toLowerCase().includes(query)) {
       hits.push({ id: habit.id, kind: "habit", title: habit.name, detail: "Habit", href: "/habits" });
+    }
+  }
+  for (const meal of state.meals) {
+    if (meal.title.toLowerCase().includes(query)) {
+      hits.push({ id: meal.id, kind: "meal", title: meal.title, detail: meal.date, href: "/kitchen" });
+    }
+  }
+  for (const item of state.shopping) {
+    if (item.title.toLowerCase().includes(query)) {
+      hits.push({ id: item.id, kind: "shopping", title: item.title, detail: "To buy", href: "/kitchen" });
     }
   }
   for (const entry of state.journal) {

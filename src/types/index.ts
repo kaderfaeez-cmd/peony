@@ -119,6 +119,36 @@ export interface Reflection {
   updatedAt: string;
 }
 
+/** One meal per day — a menu, not a meal-prep spreadsheet. */
+export interface Meal {
+  id: string;
+  date: DayKey;
+  title: string;
+  note: string;
+  updatedAt: string;
+}
+
+/** Store sections, so the list reads in the order you walk the shop. */
+export type Aisle =
+  | "produce"
+  | "bakery"
+  | "dairy"
+  | "meat"
+  | "pantry"
+  | "frozen"
+  | "drinks"
+  | "household"
+  | "other";
+
+export interface ShoppingItem {
+  id: string;
+  title: string;
+  quantity: string;
+  aisle: Aisle;
+  done: boolean;
+  createdAt: string;
+}
+
 export interface Settings {
   name: string;
   theme: "light" | "dark";
@@ -140,6 +170,8 @@ export interface PlannerState {
   notes: Note[];
   journal: JournalEntry[];
   reflections: Reflection[];
+  meals: Meal[];
+  shopping: ShoppingItem[];
   settings: Settings;
 }
 

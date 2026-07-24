@@ -57,10 +57,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Main" className="flex flex-col gap-7">
+    <nav aria-label="Main" className="flex flex-col gap-5">
       {NAV.map((group) => (
         <div key={group.title}>
-          <p className="mb-2.5 pl-4 text-[10px] font-medium uppercase tracking-[0.2em] text-ink-faint">
+          <p className="mb-2 pl-4 text-[10px] font-medium uppercase tracking-[0.2em] text-ink-faint">
             {group.title}
           </p>
           <ul className="space-y-0.5">
@@ -81,7 +81,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "group flex items-center gap-3 rounded-[var(--radius-sm)] px-4 py-[7px] text-[14px] transition-colors duration-200",
+                      "group flex items-center gap-3 rounded-[var(--radius-sm)] px-4 py-[5px] text-[14px] transition-colors duration-200",
                       active ? "text-ink" : "text-ink-soft hover:text-ink",
                     )}
                   >
@@ -109,7 +109,7 @@ function RailFooter({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <div className="space-y-3 border-t border-[var(--hairline)] pt-5">
+    <div className="space-y-2.5 border-t border-[var(--hairline)] pt-4">
       <Link
         href="/settings"
         onClick={onNavigate}
@@ -130,12 +130,15 @@ function RailFooter({ onNavigate }: { onNavigate?: () => void }) {
 
 export function NavRail() {
   return (
-    <aside className="sticky top-0 hidden h-dvh w-[236px] shrink-0 flex-col justify-between border-r border-[var(--hairline)] px-6 py-8 lg:flex">
-      <div className="space-y-10">
+    // Scrolls rather than clips: on a short window the footer must stay reachable.
+    <aside className="scrollbar-quiet sticky top-0 hidden h-dvh w-[236px] shrink-0 flex-col overflow-y-auto border-r border-[var(--hairline)] px-6 py-7 lg:flex">
+      <div className="space-y-7">
         <Wordmark />
         <NavLinks />
       </div>
-      <RailFooter />
+      <div className="mt-auto pt-6">
+        <RailFooter />
+      </div>
     </aside>
   );
 }
@@ -159,13 +162,15 @@ export function NavDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", stiffness: 340, damping: 36 }}
-            className="relative flex h-full w-[264px] flex-col justify-between bg-[var(--surface)] px-6 py-8 shadow-[var(--shadow-lift)]"
+            className="scrollbar-quiet relative flex h-full w-[264px] flex-col overflow-y-auto bg-[var(--surface)] px-6 py-8 shadow-[var(--shadow-lift)]"
           >
-            <div className="space-y-10">
+            <div className="space-y-8">
               <Wordmark />
               <NavLinks onNavigate={() => setNavOpen(false)} />
             </div>
-            <RailFooter onNavigate={() => setNavOpen(false)} />
+            <div className="mt-auto pt-8">
+              <RailFooter onNavigate={() => setNavOpen(false)} />
+            </div>
           </motion.div>
         </div>
       ) : null}

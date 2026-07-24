@@ -15,6 +15,8 @@ const KIND_LABEL: Record<SearchHit["kind"], string> = {
   goal: "Goal",
   habit: "Habit",
   journal: "Journal",
+  meal: "Menu",
+  shopping: "Shopping",
 };
 
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {

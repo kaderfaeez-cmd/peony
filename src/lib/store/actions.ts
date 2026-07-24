@@ -10,6 +10,7 @@ import type {
   PlannerState,
   Reflection,
   Settings,
+  ShoppingItem,
   Task,
   TaskDraft,
 } from "@/types";
@@ -352,6 +353,72 @@ export function upsertReflection(
     ],
   };
 }
+
+/* -------------------------------------------------------------- kitchen -- */
+
+/** One meal per day: writing over a day replaces it, clearing it removes it. */
+export function setMeal(state: PlannerState, date: string, title: string): PlannerState {
+  const trimmed = title.trim();
+  const existing = state.meals.find((meal) => meal.date === date);
+
+  if (!trimmed) {
+    return { ...state, meals: state.meals.filter((meal) => meal.date !== date) };
+  }
+  if (existing) {
+    return {
+      ...state,
+      meals: state.meals.map((meal) =>
+        meal.date === date ? { ...meal, title: trimmed, updatedAt: stamp() } : meal,
+      ),
+    };
+  }
+  return {
+    ...state,
+    meals: [
+      ...state.meals,
+      { id: createId("meal"), date, title: trimmed, note: "", updatedAt: stamp() },
+    ],
+  };
+}
+
+export const addShoppingItem = (
+  state: PlannerState,
+  item: Pick<ShoppingItem, "title" | "quantity" | "aisle">,
+): PlannerState => ({
+  ...state,
+  shopping: [
+    ...state.shopping,
+    { ...item, id: createId("shop"), done: false, createdAt: stamp() },
+  ],
+});
+
+export const updateShoppingItem = (
+  state: PlannerState,
+  id: string,
+  patch: Partial<ShoppingItem>,
+): PlannerState => ({ ...state, shopping: replace(state.shopping, id, patch) });
+
+export const toggleShoppingItem = (state: PlannerState, id: string): PlannerState => ({
+  ...state,
+  shopping: state.shopping.map((item) =>
+    item.id === id ? { ...item, done: !item.done } : item,
+  ),
+});
+
+export const removeShoppingItem = (state: PlannerState, id: string): PlannerState => ({
+  ...state,
+  shopping: state.shopping.filter((item) => item.id !== id),
+});
+
+export const restoreShoppingItems = (state: PlannerState, items: ShoppingItem[]): PlannerState => ({
+  ...state,
+  shopping: [...state.shopping, ...items],
+});
+
+export const clearTickedShopping = (state: PlannerState): PlannerState => ({
+  ...state,
+  shopping: state.shopping.filter((item) => !item.done),
+});
 
 /* ------------------------------------------------------------- settings -- */
 

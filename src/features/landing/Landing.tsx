@@ -1,46 +1,50 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { format } from "date-fns";
 import { Grain } from "@/components/atmosphere/Atmosphere";
-import { quoteOfDay } from "@/lib/quotes";
-
-const rise = {
-  hidden: { opacity: 0, y: 18 },
-  show: (index: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.9, delay: 0.16 * index, ease: [0.22, 1, 0.36, 1] as const },
-  }),
-};
+import { cn } from "@/lib/cn";
+import { useActions, useHydrated, useSettings } from "@/lib/store/provider";
 
 /** How long the cover takes to swing open before the planner takes over. */
 const OPEN_MS = 1150;
 
+/** "Faeez" → "Faeez's". Names already ending in s keep the apostrophe-s. */
+const possessive = (name: string) => `${name.trim()}’s`;
+
 /**
- * The front door — a closed cover you tap to open.
+ * The cover of the book, and nothing else: the name, what it is, and whose it is.
  *
- * The whole page is the front board of a book: it hinges on the left edge and
- * swings away to reveal the first page underneath, and only then does the app
- * take over. Anyone on reduced motion skips straight through.
+ * Tapping it hinges the board open on its left edge, revealing the first page,
+ * and the planner loads behind. Anyone on reduced motion skips straight through.
  */
 export function Landing() {
   const router = useRouter();
-  const [now, setNow] = useState("");
+  const actions = useActions();
+  const settings = useSettings();
+  const hydrated = useHydrated();
+
   const [opening, setOpening] = useState(false);
   const [lifted, setLifted] = useState(false);
-  const quote = quoteOfDay();
+  const [draftName, setDraftName] = useState("");
+  const [hintVisible, setHintVisible] = useState(false);
+
+  const named = settings.name.trim().length > 0;
 
   useEffect(() => {
-    setNow(format(new Date(), "EEEE, d MMMM"));
     router.prefetch("/home");
   }, [router]);
 
+  useEffect(() => {
+    if (!hydrated || !named) return;
+    const timer = setTimeout(() => setHintVisible(true), 1800);
+    return () => clearTimeout(timer);
+  }, [hydrated, named]);
+
   const open = useCallback(() => {
-    if (opening) return;
+    if (opening || !named) return;
 
     const calm =
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -53,7 +57,7 @@ export function Landing() {
 
     setOpening(true);
     window.setTimeout(() => router.push("/home"), OPEN_MS - 180);
-  }, [opening, router]);
+  }, [opening, named, router]);
 
   return (
     <div
@@ -62,7 +66,6 @@ export function Landing() {
     >
       <FirstPage opening={opening} />
 
-      {/* The cover. Hinged on the left, tappable anywhere. */}
       <motion.div
         onClick={open}
         initial={false}
@@ -78,106 +81,104 @@ export function Landing() {
           transformStyle: "preserve-3d",
           backfaceVisibility: "hidden",
         }}
-        className="relative flex h-dvh cursor-pointer flex-col overflow-hidden will-change-transform"
+        className={cn(
+          "relative flex h-dvh flex-col overflow-hidden will-change-transform",
+          named ? "cursor-pointer" : "cursor-default",
+        )}
       >
         <Backdrop />
 
-        <header className="relative z-10 flex items-center justify-between px-[var(--space-gutter)] py-8">
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-display text-[22px] text-ink">Peony</span>
-            <span className="mb-0.5 h-1.5 w-1.5 rounded-full bg-blush-600" />
+        <div className="relative z-10 flex h-full flex-col justify-center px-[var(--space-gutter)]">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="text-[11px] font-medium uppercase tracking-[0.34em] text-rose-ink"
+          >
+            A quiet planner
+          </motion.p>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-6 font-display text-[clamp(3.4rem,1.6rem+9vw,9rem)] leading-[0.9] tracking-[-0.035em] text-ink"
+          >
+            Peony
+          </motion.h1>
+
+          <motion.span
+            aria-hidden
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1.1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-10 block h-px w-[clamp(88px,14vw,180px)] origin-left bg-[var(--hairline-strong)]"
+          />
+
+          <div className="mt-7 min-h-[52px]">
+            <AnimatePresence mode="wait">
+              {!hydrated ? null : named ? (
+                <motion.p
+                  key="named"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                  className="font-display text-[clamp(1.1rem,0.95rem+0.8vw,1.6rem)] text-ink-soft"
+                >
+                  {possessive(settings.name)} planner
+                </motion.p>
+              ) : (
+                <motion.form
+                  key="naming"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6 }}
+                  onClick={(event) => event.stopPropagation()}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const value = draftName.trim();
+                    if (!value) return;
+                    actions.updateSettings({ name: value });
+                  }}
+                  className="flex max-w-[320px] items-end gap-3"
+                >
+                  <label className="flex-1">
+                    <span className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-ink-faint">
+                      Whose planner is this?
+                    </span>
+                    <input
+                      value={draftName}
+                      onChange={(event) => setDraftName(event.target.value)}
+                      placeholder="Your name"
+                      autoComplete="given-name"
+                      className="w-full border-b border-[var(--hairline-strong)] bg-transparent pb-1.5 font-display text-[20px] text-ink placeholder:text-ink-faint/60 focus:border-blush-400 focus:outline-none"
+                    />
+                  </label>
+                  <motion.button
+                    type="submit"
+                    whileTap={{ scale: 0.94 }}
+                    aria-label="Save name"
+                    className="mb-1 grid h-9 w-9 place-items-center rounded-full bg-blush-600 text-[#33161f] transition-colors hover:bg-[#f9557f]"
+                  >
+                    <ArrowRight size={15} strokeWidth={2} />
+                  </motion.button>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </div>
-          <p className="hidden text-[12.5px] tracking-wide text-ink-soft sm:block">{now}</p>
-        </header>
+        </div>
 
-        <main className="relative z-10 flex flex-1 items-center px-[var(--space-gutter)]">
-          <div className="w-full max-w-[62rem] pb-24">
-            <motion.p
-              custom={0}
-              variants={rise}
-              initial="hidden"
-              animate="show"
-              className="text-[11px] font-medium uppercase tracking-[0.3em] text-rose-ink"
-            >
-              A quiet planner
-            </motion.p>
-
-            <h1 className="mt-7 font-display text-[clamp(2.9rem,1.4rem+7vw,7.2rem)] leading-[0.94] tracking-[-0.03em] text-ink">
-              <motion.span custom={1} variants={rise} initial="hidden" animate="show" className="block">
-                Take the day
-              </motion.span>
-              <motion.span
-                custom={2}
-                variants={rise}
-                initial="hidden"
-                animate="show"
-                className="block pl-[0.06em]"
-              >
-                <span className="text-rose-ink">gently</span>.
-              </motion.span>
-            </h1>
-
-            <motion.p
-              custom={3}
-              variants={rise}
-              initial="hidden"
-              animate="show"
-              className="mt-9 max-w-[38ch] text-[clamp(1rem,0.95rem+0.3vw,1.15rem)] leading-relaxed text-ink-soft"
-            >
-              Days, weeks and months in one unhurried place. Write it down, tick it off, and let the rest
-              wait until tomorrow.
-            </motion.p>
-
-            <motion.div
-              custom={4}
-              variants={rise}
-              initial="hidden"
-              animate="show"
-              className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-5"
-            >
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  open();
-                }}
-                onMouseEnter={() => setLifted(true)}
-                onMouseLeave={() => setLifted(false)}
-                onFocus={() => setLifted(true)}
-                onBlur={() => setLifted(false)}
-                className="group inline-flex h-[52px] items-center gap-3 rounded-full bg-blush-600 pl-7 pr-6 text-[15px] font-medium text-[#33161f] shadow-[0_18px_40px_-18px_rgba(251,111,146,0.95)] transition-[transform,background-color] duration-300 hover:-translate-y-0.5 hover:bg-[#f9557f] active:translate-y-0"
-              >
-                Open the planner
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-[#33161f]/12 transition-transform duration-300 group-hover:translate-x-0.5">
-                  <ArrowRight size={15} strokeWidth={2} />
-                </span>
-              </button>
-              <p className="text-[12.5px] leading-relaxed text-ink-faint">
-                Tap anywhere to open it.
-                <br />
-                No account — everything stays on this device.
-              </p>
-            </motion.div>
-          </div>
-        </main>
-
-        <motion.footer
-          custom={5}
-          variants={rise}
-          initial="hidden"
-          animate="show"
-          className="relative z-10 flex items-end justify-between gap-8 border-t border-[var(--hairline)] px-[var(--space-gutter)] py-7"
+        {/* The only instruction on the cover, and it waits before it appears. */}
+        <motion.p
+          initial={false}
+          animate={{ opacity: hintVisible && !opening ? 1 : 0 }}
+          transition={{ duration: 1.2 }}
+          className="absolute bottom-9 left-[var(--space-gutter)] z-10 text-[11px] uppercase tracking-[0.24em] text-ink-faint"
         >
-          <p className="max-w-[46ch] text-[13px] leading-relaxed text-ink-soft">
-            <span className="font-display text-[15px] text-ink">“{quote.line}”</span>
-            <span className="mt-1 block text-[11.5px] uppercase tracking-[0.16em] text-ink-faint">
-              {quote.source}
-            </span>
-          </p>
-          <p className="hidden shrink-0 text-[11.5px] uppercase tracking-[0.18em] text-ink-faint sm:block">
-            Made slowly
-          </p>
-        </motion.footer>
+          Tap to open
+        </motion.p>
 
         {/* Board edge and gutter shadow — the cues that say "this is a cover". */}
         <span
@@ -198,6 +199,18 @@ export function Landing() {
           className="pointer-events-none absolute inset-0 z-30 bg-[linear-gradient(90deg,#2a1a20,rgba(42,26,32,0.35))]"
         />
       </motion.div>
+
+      {/* Keyboard route in: the cover itself is a surface, not a control. */}
+      {named ? (
+        <button
+          onClick={open}
+          onFocus={() => setLifted(true)}
+          onBlur={() => setLifted(false)}
+          className="sr-only focus:not-sr-only focus:absolute focus:bottom-8 focus:right-8 focus:z-40 focus:rounded-full focus:bg-blush-600 focus:px-5 focus:py-2.5 focus:text-[13px] focus:text-[#33161f]"
+        >
+          Open the planner
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -228,7 +241,7 @@ function FirstPage({ opening }: { opening: boolean }) {
   );
 }
 
-/** Landing keeps its own backdrop: the video, at full clarity. */
+/** The cover's own backdrop: the peonies, at full clarity. */
 function Backdrop() {
   const [ready, setReady] = useState(false);
 

@@ -9,6 +9,7 @@ import {
   Sun,
   Target,
   Timer,
+  UtensilsCrossed,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -39,6 +40,7 @@ export const NAV: NavGroup[] = [
     title: "Tend",
     items: [
       { href: "/tasks", label: "Tasks", icon: ListTodo, key: "a" },
+      { href: "/kitchen", label: "Kitchen", icon: UtensilsCrossed, key: "k" },
       { href: "/habits", label: "Habits", icon: Repeat2, key: "b" },
       { href: "/goals", label: "Goals", icon: Target, key: "g" },
       { href: "/focus", label: "Focus", icon: Timer, key: "f" },

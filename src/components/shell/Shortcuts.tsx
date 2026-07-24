@@ -16,6 +16,7 @@ export const SHORTCUTS: Array<{ keys: string; action: string }> = [
   { keys: "W", action: "This week" },
   { keys: "M", action: "This month" },
   { keys: "A", action: "All tasks" },
+  { keys: "K", action: "Kitchen" },
   { keys: "B", action: "Habits" },
   { keys: "G", action: "Goals" },
   { keys: "F", action: "Focus timer" },
