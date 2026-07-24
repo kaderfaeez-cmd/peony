@@ -1,12 +1,17 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Grain } from "@/components/atmosphere/Atmosphere";
 import { cn } from "@/lib/cn";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSyncConfigured } from "@/lib/supabase/client";
 import { useActions, useHydrated, useSettings } from "@/lib/store/provider";
+import { CoverAuth } from "./CoverAuth";
+
+const SKIP_KEY = "peony.skipAuth";
 
 /** How long the cover takes to swing open before the planner takes over. */
 const OPEN_MS = 1150;
@@ -25,26 +30,65 @@ export function Landing() {
   const actions = useActions();
   const settings = useSettings();
   const hydrated = useHydrated();
+  const { status: authStatus } = useAuth();
 
   const [opening, setOpening] = useState(false);
   const [lifted, setLifted] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [hintVisible, setHintVisible] = useState(false);
+  const [skipped, setSkipped] = useState(false);
 
   const named = settings.name.trim().length > 0;
+
+  /**
+   * What the bottom of the cover is asking for right now:
+   *   - "wait"  : auth session still resolving, show nothing interactive yet
+   *   - "auth"  : sync is on and nobody is signed in — prompt first
+   *   - "name"  : signed in (or skipped) but the planner has no owner yet
+   *   - "open"  : ready, tap to open
+   */
+  const gate: "wait" | "auth" | "name" | "open" = !hydrated
+    ? "wait"
+    : isSyncConfigured && authStatus === "loading"
+      ? "wait"
+      : isSyncConfigured && authStatus === "signed-out" && !skipped
+        ? "auth"
+        : named
+          ? "open"
+          : "name";
+
+  const canOpen = gate === "open";
 
   useEffect(() => {
     router.prefetch("/home");
   }, [router]);
 
+  // Read the earlier choice once, on mount — never re-read it on auth changes,
+  // or a stray auth event can stomp the skip the user just made this session.
   useEffect(() => {
-    if (!hydrated || !named) return;
+    setSkipped(localStorage.getItem(SKIP_KEY) === "1");
+  }, []);
+
+  // Signing in supersedes "just this device": clear the flag and the state.
+  useEffect(() => {
+    if (authStatus !== "signed-in") return;
+    localStorage.removeItem(SKIP_KEY);
+    setSkipped(false);
+  }, [authStatus]);
+
+  const skip = useCallback(() => {
+    localStorage.setItem(SKIP_KEY, "1");
+    setSkipped(true);
+  }, []);
+
+  useEffect(() => {
+    if (gate !== "open") return;
     const timer = setTimeout(() => setHintVisible(true), 1800);
     return () => clearTimeout(timer);
-  }, [hydrated, named]);
+  }, [gate]);
 
   const open = useCallback(() => {
-    if (opening || !named) return;
+    if (opening || !canOpen) return;
 
     const calm =
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -57,7 +101,7 @@ export function Landing() {
 
     setOpening(true);
     window.setTimeout(() => router.push("/home"), OPEN_MS - 180);
-  }, [opening, named, router]);
+  }, [opening, canOpen, router]);
 
   return (
     <div
@@ -83,7 +127,7 @@ export function Landing() {
         }}
         className={cn(
           "relative flex h-dvh flex-col overflow-hidden will-change-transform",
-          named ? "cursor-pointer" : "cursor-default",
+          canOpen ? "cursor-pointer" : "cursor-default",
         )}
       >
         <Backdrop />
@@ -115,14 +159,20 @@ export function Landing() {
             className="mt-10 block h-px w-[clamp(88px,14vw,180px)] origin-left bg-[var(--hairline-strong)]"
           />
 
+          {/*
+            Plain conditional, not AnimatePresence: the states are mutually
+            exclusive and each animates itself in on mount. A wait-mode presence
+            here would stall waiting on the exit of a custom component and never
+            reveal the next state.
+          */}
           <div className="mt-7 min-h-[52px]">
-            <AnimatePresence mode="wait">
-              {!hydrated ? null : named ? (
+              {gate === "wait" ? null : gate === "auth" ? (
+                <CoverAuth key="auth" onSkip={skip} />
+              ) : gate === "open" ? (
                 <motion.p
                   key="named"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                   className="font-display text-[clamp(1.1rem,0.95rem+0.8vw,1.6rem)] text-ink-soft"
                 >
@@ -133,7 +183,6 @@ export function Landing() {
                   key="naming"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.6 }}
                   onClick={(event) => event.stopPropagation()}
                   onSubmit={(event) => {
@@ -166,7 +215,6 @@ export function Landing() {
                   </motion.button>
                 </motion.form>
               )}
-            </AnimatePresence>
           </div>
         </div>
 
@@ -201,7 +249,7 @@ export function Landing() {
       </motion.div>
 
       {/* Keyboard route in: the cover itself is a surface, not a control. */}
-      {named ? (
+      {canOpen ? (
         <button
           onClick={open}
           onFocus={() => setLifted(true)}

@@ -48,8 +48,10 @@ second device. It needs a free Supabase project; nothing else changes.
    `.env.local` (see [`.env.example`](.env.example)) and into Vercel's environment
    variables. Redeploy.
 
-Then: Settings → Sync across devices → create an account. Sign in on the other
-device and the two copies merge.
+Once the keys are set, the **cover asks to sign in or create an account on open**
+— with a "just use it on this device" escape that keeps everything local. Sign in
+on the other device and the two copies merge. (Without keys, the cover skips
+straight to the name prompt and the app stays local-only.)
 
 The **anon key belongs in the browser** — every row is guarded by row-level
 security, so it only ever returns the signed-in person's own planner. The
