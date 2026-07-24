@@ -31,6 +31,9 @@ export const SYSTEM_CATEGORIES: Category[] = [
 export function emptyState(): PlannerState {
   return {
     version: STATE_VERSION,
+    revision: 0,
+    updatedAt: new Date(0).toISOString(),
+    tombstones: {},
     tasks: [],
     categories: SYSTEM_CATEGORIES,
     habits: [],
@@ -123,9 +126,9 @@ export function seededState(): PlannerState {
       }),
     ],
     habits: [
-      { id: createId("habit"), name: "Water", icon: "droplet", target: 7, log: [], archived: false, createdAt: now.toISOString() },
-      { id: createId("habit"), name: "Read", icon: "book", target: 5, log: [], archived: false, createdAt: now.toISOString() },
-      { id: createId("habit"), name: "Move", icon: "sparkles", target: 4, log: [], archived: false, createdAt: now.toISOString() },
+      { id: createId("habit"), name: "Water", icon: "droplet", target: 7, log: [], archived: false, createdAt: now.toISOString(), updatedAt: now.toISOString() },
+      { id: createId("habit"), name: "Read", icon: "book", target: 5, log: [], archived: false, createdAt: now.toISOString(), updatedAt: now.toISOString() },
+      { id: createId("habit"), name: "Move", icon: "sparkles", target: 4, log: [], archived: false, createdAt: now.toISOString(), updatedAt: now.toISOString() },
     ],
     goals: [
       {
@@ -142,6 +145,7 @@ export function seededState(): PlannerState {
         celebratedAt: null,
         archived: false,
         createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       },
     ],
     meals: [
@@ -161,6 +165,7 @@ export function seededState(): PlannerState {
         aisle: "produce",
         done: false,
         createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       },
       {
         id: createId("shop"),
@@ -169,6 +174,7 @@ export function seededState(): PlannerState {
         aisle: "dairy",
         done: false,
         createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       },
       {
         id: createId("shop"),
@@ -177,6 +183,7 @@ export function seededState(): PlannerState {
         aisle: "other",
         done: false,
         createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       },
     ],
     notes: [

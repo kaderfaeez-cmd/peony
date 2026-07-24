@@ -3,7 +3,9 @@
 import { useEffect } from "react";
 import { CelebrationProvider } from "@/components/ui/Celebration";
 import { ToastProvider } from "@/components/ui/Toaster";
+import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { PlannerProvider, useSettings } from "@/lib/store/provider";
+import { SyncProvider } from "@/lib/store/sync";
 
 /** Mirrors preferences onto <html> so CSS (and the boot script) can read them. */
 function PreferenceSync() {
@@ -28,13 +30,17 @@ function PreferenceSync() {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <PlannerProvider>
-      <ToastProvider>
-        <CelebrationProvider>
-          <PreferenceSync />
-          {children}
-        </CelebrationProvider>
-      </ToastProvider>
-    </PlannerProvider>
+    <AuthProvider>
+      <PlannerProvider>
+        <SyncProvider>
+          <ToastProvider>
+            <CelebrationProvider>
+              <PreferenceSync />
+              {children}
+            </CelebrationProvider>
+          </ToastProvider>
+        </SyncProvider>
+      </PlannerProvider>
+    </AuthProvider>
   );
 }

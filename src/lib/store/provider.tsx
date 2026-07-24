@@ -29,8 +29,16 @@ function createStore(initial: PlannerState) {
       state = next;
       listeners.forEach((listener) => listener());
     },
+    /**
+     * Every local edit bumps the revision and the timestamp; the sync layer
+     * watches those to know there is something to push. Applying a merged
+     * document from the server goes through `set` instead, so it does not
+     * count as a fresh local change.
+     */
     update(recipe: (current: PlannerState) => PlannerState) {
-      this.set(recipe(state));
+      const next = recipe(state);
+      if (next === state) return;
+      this.set({ ...next, revision: (next.revision ?? 0) + 1, updatedAt: new Date().toISOString() });
     },
     subscribe(listener: Listener) {
       listeners.add(listener);

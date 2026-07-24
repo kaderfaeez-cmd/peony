@@ -68,6 +68,7 @@ export interface Habit {
   log: DayKey[];
   archived: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Milestone {
@@ -86,6 +87,7 @@ export interface Goal {
   celebratedAt: string | null;
   archived: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Note {
@@ -147,6 +149,7 @@ export interface ShoppingItem {
   aisle: Aisle;
   done: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Settings {
@@ -161,8 +164,18 @@ export interface Settings {
   pomodoroBreak: number;
 }
 
+/**
+ * Deletions have to travel between devices too, or a record deleted on the phone
+ * simply comes back from the laptop's copy. Each entry is `id -> deletedAt`.
+ */
+export type Tombstones = Record<string, string>;
+
 export interface PlannerState {
   version: number;
+  /** Bumped on every local change; the sync layer uses it to spot drift. */
+  revision: number;
+  updatedAt: string;
+  tombstones: Tombstones;
   tasks: Task[];
   categories: Category[];
   habits: Habit[];

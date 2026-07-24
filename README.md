@@ -34,6 +34,45 @@ Then open <http://localhost:3000>.
 Global: `/` or `⌘K` searches everything, `C` adds a task, single letters navigate,
 `?` lists the keys. Deleting anything offers an undo.
 
+## Turning on sync (optional)
+
+Peony works completely without an account — this only adds the same planner on a
+second device. It needs a free Supabase project; nothing else changes.
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor → New query**, paste [`supabase/schema.sql`](supabase/schema.sql),
+   and run it. That creates one table and its row-level-security policies.
+3. In **Authentication → URL Configuration**, set the Site URL to your deployed
+   address (and add `http://localhost:3000` for local work).
+4. Copy **Project Settings → API → Project URL** and the **anon public** key into
+   `.env.local` (see [`.env.example`](.env.example)) and into Vercel's environment
+   variables. Redeploy.
+
+Then: Settings → Sync across devices → create an account. Sign in on the other
+device and the two copies merge.
+
+The **anon key belongs in the browser** — every row is guarded by row-level
+security, so it only ever returns the signed-in person's own planner. The
+`service_role` key has no place in this app; don't add it.
+
+> Already paying for Neon? This app doesn't need it. The planner is one JSON
+> document per user, which Supabase's free tier covers comfortably, and Supabase
+> Auth is what makes the login work. If you would rather keep the data in Neon,
+> only `lib/store/sync.tsx` has to change — it is the single place that talks to
+> the database.
+
+### How sync behaves
+
+- The device is the source of truth. Everything is written to `localStorage`
+  first, so the app is instant and works offline.
+- Signing in **pulls before it pushes**, so a fresh phone can never overwrite an
+  established planner with an empty one.
+- Merging is per record, not per document: if the phone added a task while the
+  laptop ticked a habit, both survive. The newer edit of the same record wins.
+- Deletions travel as tombstones, so a deleted task doesn't come back from the
+  other device — and an edit made *after* a delete counts as a deliberate
+  restore. `npm run test:merge` covers these cases.
+
 ## Design notes
 
 - **Palette**: the five roses (`#FFE5EC #FFC2D1 #FFB3C6 #FF8FAB #FB6F92`) are a
@@ -88,10 +127,9 @@ export interface PlannerRepository {
 }
 ```
 
-`LocalStorageRepository` is the only implementation today. Adding Supabase means
-writing a second one and passing it to `<PlannerProvider repository={…} />` — no
-component, hook or reducer changes, because the entity shapes already map onto
-tables.
+`LocalStorageRepository` is the only implementation, and it stays that way:
+remote sync is a *mirror* layered on top (`lib/store/sync.tsx`) rather than a
+replacement, which is what keeps the app instant and offline-capable.
 
 ## Not included
 

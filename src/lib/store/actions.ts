@@ -23,7 +23,20 @@ import type {
 const stamp = () => new Date().toISOString();
 
 const replace = <T extends { id: string }>(list: T[], id: string, patch: Partial<T>): T[] =>
-  list.map((item) => (item.id === id ? { ...item, ...patch } : item));
+  list.map((item) => (item.id === id ? { ...item, ...patch, updatedAt: stamp() } : item));
+
+/** Records a deletion so other devices delete it too instead of resurrecting it. */
+const buried = (state: PlannerState, ...ids: string[]) => ({
+  ...state.tombstones,
+  ...Object.fromEntries(ids.map((id) => [id, stamp()])),
+});
+
+/** Undo has to lift the tombstone as well, or the next sync re-deletes the row. */
+const unburied = (state: PlannerState, ...ids: string[]) => {
+  const next = { ...state.tombstones };
+  for (const id of ids) delete next[id];
+  return next;
+};
 
 /* ---------------------------------------------------------------- tasks -- */
 
@@ -106,11 +119,13 @@ export function toggleTask(state: PlannerState, id: string): PlannerState {
 export const removeTask = (state: PlannerState, id: string): PlannerState => ({
   ...state,
   tasks: state.tasks.filter((task) => task.id !== id),
+  tombstones: buried(state, id),
 });
 
 export const restoreTask = (state: PlannerState, task: Task): PlannerState => ({
   ...state,
   tasks: [...state.tasks, task],
+  tombstones: unburied(state, task.id),
 });
 
 export const archiveTask = (state: PlannerState, id: string, archived: boolean): PlannerState =>
@@ -173,6 +188,7 @@ export const addCategory = (state: PlannerState, name: string, tone: Category["t
 
 export const removeCategory = (state: PlannerState, id: string): PlannerState => ({
   ...state,
+  tombstones: buried(state, id),
   categories: state.categories.filter((category) => category.id !== id || category.system),
   tasks: state.tasks.map((task) =>
     task.categoryId === id ? { ...task, categoryId: "personal" } : task,
@@ -185,7 +201,16 @@ export const addHabit = (state: PlannerState, name: string, icon: string, target
   ...state,
   habits: [
     ...state.habits,
-    { id: createId("habit"), name, icon, target, log: [], archived: false, createdAt: stamp() },
+    {
+      id: createId("habit"),
+      name,
+      icon,
+      target,
+      log: [],
+      archived: false,
+      createdAt: stamp(),
+      updatedAt: stamp(),
+    },
   ],
 });
 
@@ -198,6 +223,7 @@ export const toggleHabitDay = (state: PlannerState, id: string, day: string): Pl
           log: habit.log.includes(day)
             ? habit.log.filter((entry) => entry !== day)
             : [...habit.log, day].sort(),
+          updatedAt: stamp(),
         }
       : habit,
   ),
@@ -211,18 +237,23 @@ export const updateHabit = (state: PlannerState, id: string, patch: Partial<Habi
 export const removeHabit = (state: PlannerState, id: string): PlannerState => ({
   ...state,
   habits: state.habits.filter((habit) => habit.id !== id),
+  tombstones: buried(state, id),
 });
 
 export const restoreHabit = (state: PlannerState, habit: Habit): PlannerState => ({
   ...state,
   habits: [...state.habits, habit],
+  tombstones: unburied(state, habit.id),
 });
 
 /* ---------------------------------------------------------------- goals -- */
 
-export const addGoal = (state: PlannerState, goal: Omit<Goal, "id" | "createdAt">): PlannerState => ({
+export const addGoal = (
+  state: PlannerState,
+  goal: Omit<Goal, "id" | "createdAt" | "updatedAt">,
+): PlannerState => ({
   ...state,
-  goals: [...state.goals, { ...goal, id: createId("goal"), createdAt: stamp() }],
+  goals: [...state.goals, { ...goal, id: createId("goal"), createdAt: stamp(), updatedAt: stamp() }],
 });
 
 export const updateGoal = (state: PlannerState, id: string, patch: Partial<Goal>): PlannerState => ({
@@ -239,6 +270,7 @@ export const toggleMilestone = (state: PlannerState, goalId: string, milestoneId
           milestones: goal.milestones.map((milestone) =>
             milestone.id === milestoneId ? { ...milestone, done: !milestone.done } : milestone,
           ),
+          updatedAt: stamp(),
         }
       : goal,
   ),
@@ -248,7 +280,11 @@ export const addMilestone = (state: PlannerState, goalId: string, title: string)
   ...state,
   goals: state.goals.map((goal) =>
     goal.id === goalId
-      ? { ...goal, milestones: [...goal.milestones, { id: createId("ms"), title, done: false }] }
+      ? {
+          ...goal,
+          milestones: [...goal.milestones, { id: createId("ms"), title, done: false }],
+          updatedAt: stamp(),
+        }
       : goal,
   ),
 });
@@ -256,11 +292,13 @@ export const addMilestone = (state: PlannerState, goalId: string, title: string)
 export const removeGoal = (state: PlannerState, id: string): PlannerState => ({
   ...state,
   goals: state.goals.filter((goal) => goal.id !== id),
+  tombstones: buried(state, id),
 });
 
 export const restoreGoal = (state: PlannerState, goal: Goal): PlannerState => ({
   ...state,
   goals: [...state.goals, goal],
+  tombstones: unburied(state, goal.id),
 });
 
 /* ---------------------------------------------------------------- notes -- */
@@ -288,11 +326,13 @@ export const updateNote = (state: PlannerState, id: string, patch: Partial<Note>
 export const removeNote = (state: PlannerState, id: string): PlannerState => ({
   ...state,
   notes: state.notes.filter((note) => note.id !== id),
+  tombstones: buried(state, id),
 });
 
 export const restoreNote = (state: PlannerState, note: Note): PlannerState => ({
   ...state,
   notes: [note, ...state.notes],
+  tombstones: unburied(state, note.id),
 });
 
 /* -------------------------------------------------------------- journal -- */
@@ -388,7 +428,7 @@ export const addShoppingItem = (
   ...state,
   shopping: [
     ...state.shopping,
-    { ...item, id: createId("shop"), done: false, createdAt: stamp() },
+    { ...item, id: createId("shop"), done: false, createdAt: stamp(), updatedAt: stamp() },
   ],
 });
 
@@ -401,23 +441,29 @@ export const updateShoppingItem = (
 export const toggleShoppingItem = (state: PlannerState, id: string): PlannerState => ({
   ...state,
   shopping: state.shopping.map((item) =>
-    item.id === id ? { ...item, done: !item.done } : item,
+    item.id === id ? { ...item, done: !item.done, updatedAt: stamp() } : item,
   ),
 });
 
 export const removeShoppingItem = (state: PlannerState, id: string): PlannerState => ({
   ...state,
   shopping: state.shopping.filter((item) => item.id !== id),
+  tombstones: buried(state, id),
 });
 
 export const restoreShoppingItems = (state: PlannerState, items: ShoppingItem[]): PlannerState => ({
   ...state,
   shopping: [...state.shopping, ...items],
+  tombstones: unburied(state, ...items.map((item) => item.id)),
 });
 
 export const clearTickedShopping = (state: PlannerState): PlannerState => ({
   ...state,
   shopping: state.shopping.filter((item) => !item.done),
+  tombstones: buried(
+    state,
+    ...state.shopping.filter((item) => item.done).map((item) => item.id),
+  ),
 });
 
 /* ------------------------------------------------------------- settings -- */

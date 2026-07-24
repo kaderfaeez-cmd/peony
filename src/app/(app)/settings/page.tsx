@@ -7,6 +7,7 @@ import { Button, IconButton } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Field";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { SHORTCUTS } from "@/components/shell/Shortcuts";
+import { AccountPanel } from "@/features/account/AccountPanel";
 import { Toggle } from "@/components/ui/Toggle";
 import { useToast } from "@/components/ui/Toaster";
 import { requestNotificationPermission } from "@/hooks/useReminders";
@@ -63,6 +64,10 @@ export default function SettingsPage() {
             onChange={(event) => actions.updateSettings({ name: event.target.value })}
           />
         </div>
+      </Section>
+
+      <Section title="Sync across devices" className="mt-12">
+        <AccountPanel />
       </Section>
 
       <Section title="Look and feel" className="mt-12">
